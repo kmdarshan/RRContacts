@@ -4,13 +4,14 @@ This is a sample project for reading all the contacts from facebook and address 
 
 Frameworks needed to run this project:   
 
-*AFNetworking  
-*Facebook  
+1.AFNetworking  
+2.Facebook  
 
-Important replace the facebook id in the plist, with your facebook id.  
+Things to do:
+1. Replace the facebook id in the plist, with your facebook id.  
+2. You only need the files inside the contacts folder for including this in your projects.  
 
-You only need the files inside the contacts folder for including this in your projects.  
-
+Screenshots:  
 
 ![Alt text](https://github.com/kmdarshan/RRContacts/blob/master/screenshots/screenshot1.png "No contacts are selected") 
 

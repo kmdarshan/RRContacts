@@ -1,0 +1,444 @@
+//
+//  RRAddFriendsViewController.m
+//  RoundRobin
+//
+//  Created by Darshan Katrumane on 11/25/14.
+//  Copyright (c) 2014 Happy Days. All rights reserved.
+//
+
+#import "RRAddFriendsViewController.h"
+#import "RRTextField.h"
+#import "RRContact.h"
+#import <AddressBook/AddressBook.h>
+#import <AddressBookUI/AddressBookUI.h>
+#import <FacebookSDK/FacebookSDK.h>
+#import "UIImageView+AFNetworking.h"
+static CGSize keyboardRect;
+@interface RRAddFriendsViewController ()
+{
+    RRTextField* addEmailTextfield;
+    UITableView* friendsTableview;
+    UIView *alphaScreen;
+}
+@end
+
+@implementation RRAddFriendsViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setup];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillShow:)
+                                                 name:UIKeyboardWillShowNotification object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillHide:)
+                                                 name:UIKeyboardWillHideNotification
+                                               object:nil];
+    
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    self.navigationController.navigationBar.topItem.title = kAddEvent;
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UIKeyboardWillShowNotification
+                                                  object:nil];
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UIKeyboardWillHideNotification
+                                                  object:nil];
+}
+#pragma mark - setup
+-(void) setup {
+    
+    self.navigationController.navigationBar.topItem.title = @"";
+    self.navigationItem.title = kAddFriends;
+
+    UIImageView *backgroundImageview = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"backgroundPic.jpg"]];
+    [self.view addSubview:backgroundImageview];
+
+    UIView *backgroundView = [[UIView alloc] initWithFrame:CGRectMake(0, self.view.frame.size.height - 50, self.view.frame.size.width, 50)];
+    CALayer *topBorder = [CALayer layer];
+    topBorder.frame = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, 1.0f);
+    topBorder.backgroundColor = [RRHelper lightGrey].CGColor;
+    [backgroundView.layer addSublayer:topBorder];
+    [backgroundView setBackgroundColor:[UIColor colorWithHexString:@"#f6f6f6"]];
+    [self.view addSubview:backgroundView];
+
+    UIView *handleTextfields = [[UIView alloc] initWithFrame:CGRectMake(0, 0, backgroundView.frame.size.width-(self.view.frame.size.width * 0.05), 50)];
+    [handleTextfields setCenter:CGPointMake(backgroundView.center.x, backgroundView.frame.size.height/2.0f)];
+    [backgroundView addSubview:handleTextfields];
+
+    addEmailTextfield = [[RRTextField alloc] initWithFrame:CGRectMake(0, 0, handleTextfields.frame.size.width*0.80, 40)];
+    [addEmailTextfield setPadding:10.0f];
+    [addEmailTextfield setDelegate:self];
+    [addEmailTextfield setPlaceholder:kInviteByEmail];
+    [addEmailTextfield setFrame:CGRectMake(0, 0, handleTextfields.frame.size.width, 40)];
+    [addEmailTextfield setCenter:CGPointMake(addEmailTextfield.center.x, handleTextfields.frame.size.height/2.0f)];
+    addEmailTextfield.returnKeyType = UIReturnKeyDone;
+    [addEmailTextfield setBorderStyle:UITextBorderStyleRoundedRect];
+    [handleTextfields addSubview:addEmailTextfield];
+    
+    alphaScreen = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height - handleTextfields.frame.size.height)];
+    UITapGestureRecognizer *dismissKeyboard = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
+    [alphaScreen addGestureRecognizer:dismissKeyboard];
+    [alphaScreen setBackgroundColor:[UIColor clearColor]];
+    [self.view addSubview:alphaScreen];
+    
+    friendsTableview = [[UITableView alloc] initWithFrame:CGRectMake(mainViewPaddingX, self.view.frame.origin.y, self.view.frame.size.width - (mainViewPaddingX*2), alphaScreen.frame.size.height) style:UITableViewStylePlain];
+    [friendsTableview setDelegate:self];
+    [friendsTableview setDataSource:self];
+    [self.view insertSubview:friendsTableview aboveSubview:alphaScreen];
+    friendsTableview.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];
+    self.friends = [NSMutableArray new];
+}
+
+-(void)viewDidAppear:(BOOL)animated {
+    if ([self.friends count] <=1) {
+        [self checkPermissionForAccessingAddressbook];
+        [self loadFacebookfriends:^(BOOL success, id result) {
+            if (success) {
+                [self sortFriends];
+                [friendsTableview reloadData];
+            } else {
+                NSLog(@"error loading friends from facebook");
+            }
+        }];
+    }
+}
+
+#pragma mark - text field
+-(void) addEmail:(UITapGestureRecognizer*) recognizer {
+    if ([[addEmailTextfield text] length] > 0) {
+        RRContact *contact = [RRContact new];
+        [contact setEmail:[addEmailTextfield text]];
+        [contact setSelected:YES];
+        [contact setType:contactTypeEmail];
+        [self.friends insertObject:contact atIndex:1];
+        [friendsTableview reloadData];
+        NSMutableArray *friendsArray = [self.friends mutableCopy];
+        NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
+        [[NSNotificationCenter defaultCenter] postNotificationName:notificationSelectFriends object:self userInfo:userInfo];
+    }
+}
+
+#pragma mark - data loaders
+-(void) checkPermissionForAccessingAddressbook {
+    if (ABAddressBookGetAuthorizationStatus() == kCLAuthorizationStatusDenied ||
+        ABAddressBookGetAuthorizationStatus() == kCLAuthorizationStatusRestricted){
+        UIAlertView *cantAddContactAlert = [[UIAlertView alloc] initWithTitle: @"Cannot Add Contact" message: @"You must give the app permission to add the contact first." delegate:nil cancelButtonTitle: @"OK" otherButtonTitles: nil];
+        [cantAddContactAlert show];
+    } else if (ABAddressBookGetAuthorizationStatus() == kCLAuthorizationStatusAuthorizedAlways){
+        [self loadAddressBookContacts];
+    } else{
+        ABAddressBookRequestAccessWithCompletion(ABAddressBookCreateWithOptions(NULL, nil), ^(bool granted, CFErrorRef error) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (!granted){
+                    UIAlertView *cantAddContactAlert = [[UIAlertView alloc] initWithTitle: @"Cannot Add Contact" message: @"You must give the app permission to add the contact first." delegate:nil cancelButtonTitle: @"OK" otherButtonTitles: nil];
+                    [cantAddContactAlert show];
+                } else {
+                    [self loadAddressBookContacts];
+                }
+            });
+        });
+    }
+}
+
+-(void) loadAddressBookContacts {
+    ABAddressBookRef addressBookRef = ABAddressBookCreateWithOptions(NULL, nil);
+    NSArray *allContacts = (__bridge NSArray *)ABAddressBookCopyArrayOfAllPeople(addressBookRef);
+    for (id record in allContacts){
+        ABRecordRef thisContact = (__bridge ABRecordRef)record;
+        RRContact* contact = [[RRContact alloc] init];
+        [contact setSelected:NO];
+        NSString* givenName = (__bridge_transfer NSString *)ABRecordCopyValue(thisContact, kABPersonFirstNameProperty);
+        NSString* familyName = (__bridge_transfer NSString *)ABRecordCopyValue(thisContact, kABPersonLastNameProperty);
+        if ([givenName length] == 0) {
+            givenName = @"";
+        }
+        if ([familyName length] == 0) {
+            familyName = @"";
+        }
+        NSString* fullName = [NSString stringWithFormat:@"%@ %@", givenName, familyName];
+        [contact setName:fullName];
+        ABMultiValueRef emailMultiValueRef = ABRecordCopyValue(thisContact, kABPersonEmailProperty);
+        NSData  *imgData = (__bridge NSData *)ABPersonCopyImageData(thisContact);
+        contact.picture = [UIImage imageWithData:imgData];
+        BOOL bHasEmail = NO;
+        for (int emailIndex = 0; emailIndex < ABMultiValueGetCount(emailMultiValueRef); emailIndex++) {
+            NSString *email = (__bridge_transfer NSString *)ABMultiValueCopyValueAtIndex(emailMultiValueRef, emailIndex);
+            [contact setEmail:email];
+            [contact setType:contactTypeAddressBook];
+            [contact setSelected:NO];
+            bHasEmail = YES;
+            break;
+        }
+        if (bHasEmail) {
+            [self.friends addObject:contact];
+        }
+    }
+    [self sortFriends];
+    [friendsTableview reloadData];
+}
+
+-(void) loadFacebookfriends:(RRCallback) callback {
+    if (!FBSession.activeSession.isOpen) {
+        [FBSession openActiveSessionWithReadPermissions:@[@"public_profile", @"user_friends"]
+                                           allowLoginUI:YES
+                                      completionHandler:^(FBSession *session,
+                                                          FBSessionState state,
+                                                          NSError *error) {
+                                          if (error) {
+                                              NSLog(@"no session");
+                                              callback(NO, nil);
+                                          } else if (session.isOpen) {
+                                              NSLog(@"session is open");
+                                              [self loadFacebookfriends:^(BOOL success, id result) {
+                                                  if (success) {
+                                                      callback(YES, nil);
+                                                  } else {
+                                                      callback(NO, nil);
+                                                  }
+                                              }];
+                                          }
+                                      }];
+    }else{
+        FBRequest* friendsRequest = [FBRequest requestForMyFriends];
+        [friendsRequest startWithCompletionHandler: ^(FBRequestConnection *connection, NSDictionary* result, NSError *error) {
+            if (error) {
+                NSLog(@"session is open but error getting friends");
+                callback(NO, nil);
+            }else{
+                NSLog(@"session is open and success");
+                NSArray* friends = [result objectForKey:@"data"];
+                for (NSDictionary<FBGraphUser>* friend in friends) {
+                    if ([self isContactPresent:[friend objectID]] == NO) {
+                        RRContact* contact = [[RRContact alloc] init];
+                        [contact setType:contactTypeFacebook];
+                        [contact setFacebookId:[friend objectID]];
+                        [contact setName:[NSString stringWithFormat:@"%@", [friend name]]];
+                        [contact setSelected:NO];
+                        [self.friends addObject:contact];                        
+                    }
+                }
+                callback(YES, nil);
+            }
+        }];
+    }
+}
+-(BOOL) isContactPresent:(NSString*) objectId {
+    for (RRContact *contact in self.friends) {
+        if ([contact type] == contactTypeFacebook) {
+            if ([[[contact facebookId] lowercaseString] isEqualToString:[objectId lowercaseString]]) {
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+#pragma mark - sorting 
+-(void) sortFriends {
+    // lets do a quick sort
+    [self.friends sortUsingComparator:^ NSComparisonResult(RRContact *place1, RRContact *place2) {
+        NSString *n1 = [place1 name];
+        NSString *n2 = [place2 name];
+        NSComparisonResult result = [n1 localizedCompare:n2];
+        return result;
+    }];
+}
+
+#pragma mark - Table view data source
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    RRContact *contact = [self.friends objectAtIndex:[indexPath row]];
+    if ([contact selected] == YES) {
+        [contact setSelected:NO];
+    } else {
+        [contact setSelected:YES];
+    }
+    [self.friends removeObjectAtIndex:[indexPath row]];
+    [self.friends insertObject:contact atIndex:[indexPath row]];
+    [friendsTableview reloadRowsAtIndexPaths:[NSArray arrayWithObjects:[NSIndexPath indexPathForItem:[indexPath row] inSection:0], nil] withRowAnimation:UITableViewRowAnimationAutomatic];
+    NSMutableArray *friendsArray = [self.friends mutableCopy];
+    NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
+    [[NSNotificationCenter defaultCenter] postNotificationName:notificationSelectFriends object:self userInfo:userInfo];
+}
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return 1;
+}
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return [self.friends count];
+}
+-(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    return 44.0f;
+}
+-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 44.0f)];
+    [view setBackgroundColor:[UIColor clearColor]];
+    return view;
+}
+-(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return kRowHeight;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    static NSString* cellIndentifier = @"cellIdentifier";
+    UITableViewCell * cell;
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIndentifier];
+        cell.selectionStyle = UITableViewCellSelectionStyleGray;
+    }
+    RRContact *contact = [self.friends objectAtIndex:[indexPath row]];
+    if ([contact selected] == YES) {
+        UIImageView *selectedImageview = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"selected"]];
+        [selectedImageview setFrame:CGRectMake(0, 0, 24, 19)];
+        cell.accessoryView = selectedImageview;
+    } else {
+        UIImageView *selectedImageview = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"unselected"]];
+        [selectedImageview setFrame:CGRectMake(0, 0, 24, 19)];
+        cell.accessoryView = selectedImageview;
+    }
+    
+    cell.imageView.image = [RRHelper resizeImage:[UIImage imageNamed:@"avatar"] toSize:CGSizeMake(42, 35)];
+    [[cell textLabel] setFont:[UIFont fontWithName:kFontRegular size:kFontSizeListingTextLabel]];
+    [[cell textLabel] setTextColor:[RRHelper darkGrey]];
+    [[cell detailTextLabel] setFont:[UIFont fontWithName:kFontRegular size:kFontSizeListingDetailedTextLabel]];
+    [[cell detailTextLabel] setTextColor:[RRHelper mediumGrey]];
+    
+    if ([contact type] == contactTypeEmail) {
+        [[cell textLabel] setText:[contact email]];
+    } else
+    if ([contact type] == contactTypeAddressBook) {
+        [[cell textLabel] setText:[contact name]];
+        [[cell detailTextLabel] setText:[contact email]];
+        if (contact.picture) {
+            UIImageView * roundedView = [[UIImageView alloc] initWithImage: contact.picture];
+            [roundedView setFrame:CGRectMake(0, 0, 42, 42)];
+            CALayer * l = [roundedView layer];
+            [l setMasksToBounds:YES];
+            [l setCornerRadius:roundedView.frame.size.width / 2.0f];
+            [cell.imageView addSubview:roundedView];
+        }
+    } else
+    if ([contact type] == contactTypeFacebook) {
+        
+        NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
+        attachment.image = [RRHelper resizeImage:[UIImage imageNamed:@"facebook"] toSize:CGSizeMake(16, 16)];
+        NSAttributedString *attachmentString = [NSAttributedString attributedStringWithAttachment:attachment];
+        
+        NSMutableAttributedString *myString= [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@  ", [contact name]] attributes:@{ NSFontAttributeName : [UIFont fontWithName:kFontRegular size:15.0f]}];
+        [myString appendAttributedString:attachmentString];
+        cell.textLabel.attributedText = myString;
+        
+        NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?width=50&height=50", [contact facebookId]]] cachePolicy:NSURLRequestReturnCacheDataElseLoad timeoutInterval:5];
+        __weak UITableViewCell *blockCell = cell;
+        [cell.imageView setImageWithURLRequest:request placeholderImage:cell.imageView.image success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                
+                UIImageView * roundedView = [[UIImageView alloc] initWithImage: image];
+                [roundedView setFrame:CGRectMake(0, 0, 42, 42)];
+                CALayer * l = [roundedView layer];
+                [l setMasksToBounds:YES];
+                [l setCornerRadius:roundedView.frame.size.width / 2.0f];
+                [blockCell.imageView addSubview:roundedView];
+            });
+            
+        } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+            NSLog(@"not able to download images");
+        }];
+
+    } if ([contact type] == contactTypeDummy) {
+        cell.textLabel.text = @"";
+    }
+    return cell;
+}
+
+#pragma mark - keyboard helpers
+-(void) dismissKeyboard {
+    [self.view sendSubviewToBack:alphaScreen];
+    [addEmailTextfield resignFirstResponder];
+}
+-(BOOL)textFieldShouldReturn:(UITextField *)textField {
+    [self.view sendSubviewToBack:alphaScreen];
+    [addEmailTextfield resignFirstResponder];
+    
+    if ([[addEmailTextfield text] length] > 0) {
+        RRContact *contact = [RRContact new];
+        [contact setEmail:[addEmailTextfield text]];
+        [contact setSelected:YES];
+        [contact setType:contactTypeEmail];
+        [self.friends insertObject:contact atIndex:1];
+        [friendsTableview reloadData];
+        NSMutableArray *friendsArray = [self.friends mutableCopy];
+        NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
+        [[NSNotificationCenter defaultCenter] postNotificationName:notificationSelectFriends object:self userInfo:userInfo];
+        [self performSelector:@selector(animateEmailCell) withObject:nil afterDelay:0.5f];
+    }
+    return YES;
+}
+-(void)animateEmailCell {
+    UITableViewCell *cell = [friendsTableview cellForRowAtIndexPath:[NSIndexPath indexPathForRow:1 inSection:0]];
+    [UIView animateWithDuration:0.5f animations:^{
+        [cell setBackgroundColor:[UIColor lightGrayColor]];
+        [cell setBackgroundColor:[UIColor whiteColor]];
+    }];
+}
+-(void)keyboardWillShow:(NSNotification*) notification {
+    [self.view bringSubviewToFront:alphaScreen];
+    NSDictionary* keyboardInfo = [notification userInfo];
+    keyboardRect = [[keyboardInfo objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
+    if (self.view.frame.origin.y >= 0)
+    {
+        [self setViewMovedUp:YES];
+    }
+    else if (self.view.frame.origin.y < 0)
+    {
+        [self setViewMovedUp:NO];
+    }
+}
+
+-(void)keyboardWillHide:(NSNotification*) notification {
+    if (self.view.frame.origin.y >= 0)
+    {
+        [self setViewMovedUp:YES];
+    }
+    else if (self.view.frame.origin.y < 0)
+    {
+        [self setViewMovedUp:NO];
+    }
+}
+
+-(void)setViewMovedUp:(BOOL)movedUp
+{
+    [UIView beginAnimations:nil context:NULL];
+    [UIView setAnimationDuration:0.3]; // if you want to slide up the view
+    CGRect rect = self.view.frame;
+    if (movedUp)
+    {
+        // 1. move the view's origin up so that the text field that will be hidden come above the keyboard
+        // 2. increase the size of the view so that the area behind the keyboard is covered up.
+        rect.origin.y -= keyboardRect.height;
+        rect.size.height += keyboardRect.height;
+    }
+    else
+    {
+        // revert back to the normal state.
+        rect.origin.y += keyboardRect.height;
+        rect.size.height -= keyboardRect.height;
+    }
+    self.view.frame = rect;
+    [UIView commitAnimations];
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+@end

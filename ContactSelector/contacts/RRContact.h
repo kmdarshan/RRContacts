@@ -9,11 +9,11 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 typedef enum {
-    contactTypeFacebook = 0,
-    contactTypeAddressBook = 1,
-    contactTypeEmail = 2,
-    contactTypeDummy
-} contactType;
+    RRContactTypeFacebook = 0,
+    RRContactTypeAddressBook = 1,
+    RRContactTypeEmail = 2,
+    RRContactTypeDummy
+} RRContactType;
 
 @interface RRContact : NSObject
 @property (nonatomic, strong) NSString* email;

@@ -10,7 +10,7 @@
 #import "UIColor_categories.h"
 #import <AddressBook/AddressBook.h>
 #import <AddressBookUI/AddressBookUI.h>
-
+#import "RRContact.h"
 typedef void(^RRCallback)(BOOL success, id result);
 typedef enum {
     kRRContactTypeFacebook = 0,
@@ -49,4 +49,5 @@ static NSString *kFacebookID = @"FacebookAppID";
 +(UIColor*) darkGrey;
 +(BOOL)isKeyValidInPlist:(NSString*) key;
 +(void) permissionForAccessingAddressbook:(RRCallback) callback;
++(NSMutableArray*) contactsFromAddressBook;
 @end

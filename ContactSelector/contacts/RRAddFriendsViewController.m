@@ -60,10 +60,8 @@ static CGSize keyboardRect;
     
     self.navigationController.navigationBar.topItem.title = @"";
     self.navigationItem.title = kAddFriends;
-
-    UIImageView *backgroundImageview = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"backgroundPic.jpg"]];
-    [self.view addSubview:backgroundImageview];
-
+    
+    [self.view setBackgroundColor:[UIColor blackColor]];
     UIView *backgroundView = [[UIView alloc] initWithFrame:CGRectMake(0, self.view.frame.size.height - 50, self.view.frame.size.width, 50)];
     CALayer *topBorder = [CALayer layer];
     topBorder.frame = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, 1.0f);
@@ -101,14 +99,40 @@ static CGSize keyboardRect;
 }
 
 -(void)viewDidAppear:(BOOL)animated {
-    if ([self.friends count] <=1) {
-        [self checkPermissionForAccessingAddressbook];
-        [self loadFacebookfriends:^(BOOL success, id result) {
+    [super viewDidAppear:animated];
+    if (![self.friends count]>0) {
+        if([RRHelper isKeyValidInPlist:kFacebookID]) {
+            // facebookID present, load friends from facebook
+            __block UITableView *blockFriendsTableView = friendsTableview;
+            __weak __typeof(self) weakSelf = self;
+            [self loadFacebookfriends:^(BOOL success, id result) {
+                if (success) {
+                    [weakSelf sortFriends];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [blockFriendsTableView reloadData];
+                    });
+                } else {
+                    NSLog(@"error loading friends from facebook");
+                }
+            }];
+        } else
+        {
+            // show error
+            [self showError:@"You need to add the key FacebookID in your plist."];
+        }
+        __block UITableView *blockFriendsTableView = friendsTableview;
+        __weak __typeof(self) weakSelf = self;
+        [RRHelper permissionForAccessingAddressbook:^(BOOL success, id result) {
             if (success) {
-                [self sortFriends];
-                [friendsTableview reloadData];
-            } else {
-                NSLog(@"error loading friends from facebook");
+                // load contacts from address book
+                weakSelf.friends = [[RRHelper contactsFromAddressBook] mutableCopy];
+                [weakSelf sortFriends];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [blockFriendsTableView reloadData];                    
+                });
+            } else
+            {
+                [weakSelf showError:@"You must give the app permission to add the contact first."];
             }
         }];
     }
@@ -130,56 +154,18 @@ static CGSize keyboardRect;
 }
 
 #pragma mark - Contacts
--(void) loadAddressBookContacts {
-    ABAddressBookRef addressBookRef = ABAddressBookCreateWithOptions(NULL, nil);
-    NSArray *allContacts = (__bridge NSArray *)ABAddressBookCopyArrayOfAllPeople(addressBookRef);
-    for (id record in allContacts){
-        ABRecordRef thisContact = (__bridge ABRecordRef)record;
-        RRContact* contact = [[RRContact alloc] init];
-        [contact setSelected:NO];
-        NSString* givenName = (__bridge_transfer NSString *)ABRecordCopyValue(thisContact, kABPersonFirstNameProperty);
-        NSString* familyName = (__bridge_transfer NSString *)ABRecordCopyValue(thisContact, kABPersonLastNameProperty);
-        if ([givenName length] == 0) {
-            givenName = @"";
-        }
-        if ([familyName length] == 0) {
-            familyName = @"";
-        }
-        NSString* fullName = [NSString stringWithFormat:@"%@ %@", givenName, familyName];
-        [contact setName:fullName];
-        ABMultiValueRef emailMultiValueRef = ABRecordCopyValue(thisContact, kABPersonEmailProperty);
-        NSData  *imgData = (__bridge NSData *)ABPersonCopyImageData(thisContact);
-        contact.picture = [UIImage imageWithData:imgData];
-        BOOL bHasEmail = NO;
-        for (int emailIndex = 0; emailIndex < ABMultiValueGetCount(emailMultiValueRef); emailIndex++) {
-            NSString *email = (__bridge_transfer NSString *)ABMultiValueCopyValueAtIndex(emailMultiValueRef, emailIndex);
-            [contact setEmail:email];
-            [contact setType:kRRContactTypeAddressBook];
-            [contact setSelected:NO];
-            bHasEmail = YES;
-            break;
-        }
-        if (bHasEmail) {
-            [self.friends addObject:contact];
-        }
-    }
-    [self sortFriends];
-    [friendsTableview reloadData];
-}
-
 -(void) loadFacebookfriends:(RRCallback) callback {
     if (!FBSession.activeSession.isOpen) {
+        __weak __typeof(self) weakSelf = self;
         [FBSession openActiveSessionWithReadPermissions:@[@"public_profile", @"user_friends"]
                                            allowLoginUI:YES
                                       completionHandler:^(FBSession *session,
                                                           FBSessionState state,
                                                           NSError *error) {
                                           if (error) {
-                                              NSLog(@"no session");
                                               callback(NO, nil);
                                           } else if (session.isOpen) {
-                                              NSLog(@"session is open");
-                                              [self loadFacebookfriends:^(BOOL success, id result) {
+                                              [weakSelf loadFacebookfriends:^(BOOL success, id result) {
                                                   if (success) {
                                                       callback(YES, nil);
                                                   } else {
@@ -190,10 +176,10 @@ static CGSize keyboardRect;
                                       }];
     }else{
         FBRequest* friendsRequest = [FBRequest requestForMyFriends];
+        __weak __typeof(self) weakSelf = self;
         [friendsRequest startWithCompletionHandler: ^(FBRequestConnection *connection, NSDictionary* result, NSError *error) {
             if (error) {
-                NSLog(@"session is open but error getting friends");
-                callback(NO, nil);
+                callback(NO, @"session is open but error getting friends");
             }else{
                 NSLog(@"session is open and success");
                 NSArray* friends = [result objectForKey:@"data"];
@@ -204,7 +190,7 @@ static CGSize keyboardRect;
                         [contact setFacebookId:[friend objectID]];
                         [contact setName:[NSString stringWithFormat:@"%@", [friend name]]];
                         [contact setSelected:NO];
-                        [self.friends addObject:contact];                        
+                        [weakSelf.friends addObject:contact];
                     }
                 }
                 callback(YES, nil);
@@ -224,10 +210,9 @@ static CGSize keyboardRect;
 }
 #pragma mark - sorting 
 -(void) sortFriends {
-    // lets do a quick sort
-    [self.friends sortUsingComparator:^ NSComparisonResult(RRContact *place1, RRContact *place2) {
-        NSString *n1 = [place1 name];
-        NSString *n2 = [place2 name];
+    [self.friends sortUsingComparator:^ NSComparisonResult(RRContact *contact1, RRContact *contact2) {
+        NSString *n1 = [contact1 name];
+        NSString *n2 = [contact2 name];
         NSComparisonResult result = [n1 localizedCompare:n2];
         return result;
     }];

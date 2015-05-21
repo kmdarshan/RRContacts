@@ -57,4 +57,29 @@
         }
     }
 }
++(NSMutableArray*) contactsFromAddressBook {
+    ABAddressBookRef addressBookRef = ABAddressBookCreateWithOptions(NULL, nil);
+    NSArray *allContacts = (__bridge NSArray *)ABAddressBookCopyArrayOfAllPeople(addressBookRef);
+    NSMutableArray *friends = [NSMutableArray new];
+    for (id record in allContacts){
+        ABRecordRef thisContact = (__bridge ABRecordRef)record;
+        RRContact* contact = [[RRContact alloc] init];
+        [contact setSelected:NO];
+        NSString* givenName = (__bridge_transfer NSString *)ABRecordCopyValue(thisContact, kABPersonFirstNameProperty);
+        NSString* familyName = (__bridge_transfer NSString *)ABRecordCopyValue(thisContact, kABPersonLastNameProperty);
+        [contact setName:[NSString stringWithFormat:@"%@ %@", ([givenName length] == 0)? (givenName = @"") : (givenName = givenName), ([familyName length] == 0) ? (familyName = @"") : (familyName = familyName)]];
+        ABMultiValueRef emailMultiValueRef = ABRecordCopyValue(thisContact, kABPersonEmailProperty);
+        NSData  *imgData = (__bridge NSData *)ABPersonCopyImageData(thisContact);
+        contact.picture = [UIImage imageWithData:imgData];
+        if (ABMultiValueGetCount(emailMultiValueRef) > 0) {
+            // get the first email in the list
+            NSString *email = (__bridge_transfer NSString *)ABMultiValueCopyValueAtIndex(emailMultiValueRef, 0);
+            [contact setEmail:email];
+            [contact setType:kRRContactTypeAddressBook];
+            [contact setSelected:NO];
+            [friends addObject:contact];
+        }
+    }
+    return friends;
+}
 @end

@@ -29,11 +29,14 @@ static NSString *kAddEvent = @"ADD EVENT";
 static NSString *kAddFriends = @"Friends";
 static NSString *kInviteByEmail = @"INVITE BY EMAIL";
 
-#pragma mark - paddings
+#pragma mark - keys
+static NSString *kFacebookID = @"FacebookAppID";
+
 @interface RRHelper : NSObject
 +(UIImage*) resizeImage:(UIImage *)image toSize:(CGSize)size;
 +(UIColor*) appBlue;
 +(UIColor*) lightGrey;
 +(UIColor*) mediumGrey;
 +(UIColor*) darkGrey;
++(BOOL)isKeyValidInPlist:(NSString*) key;
 @end

@@ -30,4 +30,12 @@
 +(UIColor*) appBlue {
     return [UIColor colorWithHexString:@"#4bb5c1"];
 }
++(BOOL)isKeyValidInPlist:(NSString*) key {
+    if ([[NSBundle mainBundle] objectForInfoDictionaryKey:key]) {
+        if ([[[NSBundle mainBundle] objectForInfoDictionaryKey:key] length] > 0) {
+            return YES;
+        }
+    }
+    return NO;
+}
 @end

@@ -254,7 +254,7 @@ static CGSize keyboardRect;
     }];
 }
 
-#pragma mark - Table view data source
+#pragma mark - table view 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     RRContact *contact = [self.friends objectAtIndex:[indexPath row]];
     if ([contact selected] == YES) {

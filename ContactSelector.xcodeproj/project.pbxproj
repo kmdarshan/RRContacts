@@ -139,6 +139,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7D5D086C1B0D8CCD001F9976 /* models */ = {
+			isa = PBXGroup;
+			children = (
+				B0F28D621A7F3B3E00045B62 /* RRContact.h */,
+				B0F28D631A7F3B3E00045B62 /* RRContact.m */,
+			);
+			name = models;
+			sourceTree = "<group>";
+		};
 		B0F28CCC1A7ECF9B00045B62 = {
 			isa = PBXGroup;
 			children = (
@@ -270,8 +279,7 @@
 				B0F28D5C1A7F3B3E00045B62 /* resources */,
 				B0F28D601A7F3B3E00045B62 /* RRAddFriendsViewController.h */,
 				B0F28D611A7F3B3E00045B62 /* RRAddFriendsViewController.m */,
-				B0F28D621A7F3B3E00045B62 /* RRContact.h */,
-				B0F28D631A7F3B3E00045B62 /* RRContact.m */,
+				7D5D086C1B0D8CCD001F9976 /* models */,
 				B0F28D641A7F3B3E00045B62 /* RRHelper.h */,
 				B0F28D651A7F3B3E00045B62 /* RRHelper.m */,
 				B0F28D661A7F3B3E00045B62 /* RRTextField.h */,
@@ -600,6 +608,7 @@
 				B0F28CFA1A7ECF9B00045B62 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		B0F28CFB1A7ECF9B00045B62 /* Build configuration list for PBXNativeTarget "ContactSelectorTests" */ = {
 			isa = XCConfigurationList;
@@ -608,6 +617,7 @@
 				B0F28CFD1A7ECF9B00045B62 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

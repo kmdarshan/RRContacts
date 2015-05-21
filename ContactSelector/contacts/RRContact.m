@@ -9,5 +9,4 @@
 #import "RRContact.h"
 
 @implementation RRContact
-@synthesize email, facebookId, name, number, type;
 @end

@@ -25,6 +25,7 @@ static CGSize keyboardRect;
 
 @implementation RRContactsViewController
 
+#pragma mark Views
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setup];
@@ -56,6 +57,26 @@ static CGSize keyboardRect;
                                                     name:UIKeyboardWillHideNotification
                                                   object:nil];
 }
+-(void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    // trying out group dispatch, if this would work
+    if (![self.friends count]>0) {
+//        dispatch_queue_t globalQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+//            dispatch_group_t group = dispatch_group_create();
+//        __weak __typeof(self) weakSelf = self;
+//        dispatch_group_async(group, globalQueue, ^{
+//            [weakSelf callFacebook];
+//        });
+//        dispatch_group_async(group, globalQueue, ^{
+//            [weakSelf callAddressBook];
+//        });
+//        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+//        NSLog(@"finished up group dispatch");
+        [self callAddressBook];
+        [self callFacebook];
+    }
+}
+
 #pragma mark - setup
 -(void) setup {
     
@@ -97,14 +118,6 @@ static CGSize keyboardRect;
     [self.view insertSubview:friendsTableview aboveSubview:alphaScreen];
     friendsTableview.tableFooterView = [[UIView alloc] initWithFrame:CGRectZero];
     self.friends = [NSMutableArray new];
-}
-
--(void)viewDidAppear:(BOOL)animated {
-    [super viewDidAppear:animated];
-    if (![self.friends count]>0) {
-        [self callAddressBook];
-        [self callFacebook];
-    }
 }
 
 #pragma mark - text field

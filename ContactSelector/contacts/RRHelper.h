@@ -29,6 +29,7 @@ static CGFloat kFontSizeListingDetailedTextLabel = 12.0f;
 #pragma mark - height
 static NSInteger kRowHeight = 55;
 static NSInteger kRowHeightEventDescriptionCell = 205;
+static NSInteger kImageSize = 42.0f;
 
 #pragma mark - notifications
 static NSString *RRNotificationSelectFriends = @"com.redflower.addFriendsViewController.friends";

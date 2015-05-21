@@ -370,7 +370,7 @@ static CGSize keyboardRect;
             [[cell detailTextLabel] setText:[contact email]];
             if (contact.picture) {
                 UIImageView * roundedView = [[UIImageView alloc] initWithImage: contact.picture];
-                [roundedView setFrame:CGRectMake(0, 0, 42, 42)];
+                [roundedView setFrame:CGRectMake(0, 0, kImageSize, kImageSize)];
                 CALayer * l = [roundedView layer];
                 [l setMasksToBounds:YES];
                 [l setCornerRadius:roundedView.frame.size.width / 2.0f];
@@ -393,7 +393,7 @@ static CGSize keyboardRect;
                     dispatch_async(dispatch_get_main_queue(), ^{
                         
                         UIImageView * roundedView = [[UIImageView alloc] initWithImage: image];
-                        [roundedView setFrame:CGRectMake(0, 0, 42, 42)];
+                        [roundedView setFrame:CGRectMake(0, 0, kImageSize, kImageSize)];
                         CALayer * l = [roundedView layer];
                         [l setMasksToBounds:YES];
                         [l setCornerRadius:roundedView.frame.size.width / 2.0f];

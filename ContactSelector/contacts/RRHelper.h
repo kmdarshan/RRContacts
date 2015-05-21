@@ -11,22 +11,22 @@
 typedef void(^RRCallback)(BOOL success, id result);
 
 #pragma mark - font
-static NSString *kFontRegular = @"Arimo";
-static NSInteger mainViewPaddingX = 8.0;
-static NSInteger mainViewPaddingY = 8.0;
-static CGFloat kFontNormalSize = 18.0f;
-static CGFloat kFontSizeListingTextLabel = 16.0f;
-static CGFloat kFontSizeListingDetailedTextLabel = 12.0f;
+static const NSString *kFontRegular = @"Arimo";
+static const NSInteger mainViewPaddingX = 8.0;
+static const NSInteger mainViewPaddingY = 8.0;
+static const CGFloat kFontNormalSize = 18.0f;
+static const CGFloat kFontSizeListingTextLabel = 16.0f;
+static const CGFloat kFontSizeListingDetailedTextLabel = 12.0f;
 #pragma mark - height
-static NSInteger kRowHeight = 55;
-static NSInteger kRowHeightEventDescriptionCell = 205;
+static const NSInteger kRowHeight = 55;
+static const NSInteger kRowHeightEventDescriptionCell = 205;
 #pragma mark - notifications
-static NSString *notificationAddFriends = @"com.redflower.addEvents.friends";
-static NSString *notificationSelectFriends = @"com.redflower.addEvents.addFriendsViewController";
+static const NSString *notificationAddFriends = @"com.redflower.addEvents.friends";
+static const NSString *notificationSelectFriends = @"com.redflower.addEvents.addFriendsViewController";
 #pragma mark - names
-static NSString *kAddEvent = @"ADD EVENT";
-static NSString *kAddFriends = @"Friends";
-static NSString *kInviteByEmail = @"INVITE BY EMAIL";
+static const NSString *kAddEvent = @"ADD EVENT";
+static const NSString *kAddFriends = @"Friends";
+static const NSString *kInviteByEmail = @"INVITE BY EMAIL";
 #pragma mark - paddings
 @interface RRHelper : NSObject
 +(UIImage*) resizeImage:(UIImage *)image toSize:(CGSize)size;

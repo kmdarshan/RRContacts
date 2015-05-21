@@ -22,7 +22,7 @@ static NSInteger kRowHeight = 55;
 static NSInteger kRowHeightEventDescriptionCell = 205;
 
 #pragma mark - notifications
-static NSString *RRNotificationSelectFriends = @"com.redflower.addEvents.addFriendsViewController";
+static NSString *RRNotificationSelectFriends = @"com.redflower.addFriendsViewController.friends";
 
 #pragma mark - names
 static NSString *kAddEvent = @"ADD EVENT";

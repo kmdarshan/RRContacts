@@ -102,40 +102,8 @@ static CGSize keyboardRect;
 -(void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     if (![self.friends count]>0) {
-        if([RRHelper isKeyValidInPlist:kFacebookID]) {
-            // facebookID present, load friends from facebook
-            __block UITableView *blockFriendsTableView = friendsTableview;
-            __weak __typeof(self) weakSelf = self;
-            [self loadFacebookfriends:^(BOOL success, id result) {
-                if (success) {
-                    [weakSelf sortFriends];
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        [blockFriendsTableView reloadData];
-                    });
-                } else {
-                    NSLog(@"error loading friends from facebook");
-                }
-            }];
-        } else
-        {
-            // show error
-            [self showError:@"You need to add the key FacebookID in your plist."];
-        }
-        __block UITableView *blockFriendsTableView = friendsTableview;
-        __weak __typeof(self) weakSelf = self;
-        [RRHelper permissionForAccessingAddressbook:^(BOOL success, id result) {
-            if (success) {
-                // load contacts from address book
-                weakSelf.friends = [[RRHelper contactsFromAddressBook] mutableCopy];
-                [weakSelf sortFriends];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [blockFriendsTableView reloadData];                    
-                });
-            } else
-            {
-                [weakSelf showError:@"You must give the app permission to add the contact first."];
-            }
-        }];
+        [self callAddressBook];
+        [self callFacebook];
     }
 }
 
@@ -344,6 +312,44 @@ static CGSize keyboardRect;
 }
 
 #pragma mark - Helpers
+-(void) callFacebook {
+    if([RRHelper isKeyValidInPlist:kFacebookID]) {
+        // facebookID present, load friends from facebook
+        __block UITableView *blockFriendsTableView = friendsTableview;
+        __weak __typeof(self) weakSelf = self;
+        [self loadFacebookfriends:^(BOOL success, id result) {
+            if (success) {
+                [weakSelf sortFriends];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [blockFriendsTableView reloadData];
+                });
+            } else {
+                NSLog(@"error loading friends from facebook");
+            }
+        }];
+    } else
+    {
+        // show error
+        [self showError:@"You need to add the key FacebookID in your plist."];
+    }
+}
+-(void) callAddressBook {
+    __block UITableView *blockFriendsTableView = friendsTableview;
+    __weak __typeof(self) weakSelf = self;
+    [RRHelper permissionForAccessingAddressbook:^(BOOL success, id result) {
+        if (success) {
+            // load contacts from address book
+            weakSelf.friends = [[RRHelper contactsFromAddressBook] mutableCopy];
+            [weakSelf sortFriends];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [blockFriendsTableView reloadData];
+            });
+        } else
+        {
+            [weakSelf showError:@"You must give the app permission to add the contact first."];
+        }
+    }];
+}
 -(void) setupCell:(RRContactTableViewCell*) cell forIndexPath:(NSIndexPath*) indexPath {
     
     RRContact *contact = [self.friends objectAtIndex:[indexPath row]];

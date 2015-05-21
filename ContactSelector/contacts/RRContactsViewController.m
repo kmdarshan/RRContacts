@@ -77,7 +77,7 @@ static CGSize keyboardRect;
     }
 }
 
-#pragma mark - setup
+#pragma mark - Setup
 -(void) setup {
     
     self.navigationController.navigationBar.topItem.title = @"";
@@ -120,7 +120,7 @@ static CGSize keyboardRect;
     self.friends = [NSMutableArray new];
 }
 
-#pragma mark - text field
+#pragma mark - Text field
 -(void) addEmail:(UITapGestureRecognizer*) recognizer {
     if ([[addEmailTextfield text] length] > 0) {
         RRContact *contact = [RRContact new];
@@ -190,7 +190,7 @@ static CGSize keyboardRect;
     }
     return NO;
 }
-#pragma mark - sorting 
+#pragma mark - Sorting
 -(void) sortFriends {
     [self.friends sortUsingComparator:^ NSComparisonResult(RRContact *contact1, RRContact *contact2) {
         NSString *n1 = [contact1 name];
@@ -247,7 +247,7 @@ static CGSize keyboardRect;
 -(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
     [self setupCell:(RRContactTableViewCell*)cell forIndexPath:indexPath];
 }
-#pragma mark - keyboard helpers
+#pragma mark - Keyboard helpers
 -(void) dismissKeyboard {
     [self.view sendSubviewToBack:alphaScreen];
     [addEmailTextfield resignFirstResponder];

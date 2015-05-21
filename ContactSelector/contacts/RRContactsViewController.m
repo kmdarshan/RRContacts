@@ -218,21 +218,6 @@ static CGSize keyboardRect;
     }];
 }
 
-#pragma mark - table view 
--(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    RRContact *contact = [self.friends objectAtIndex:[indexPath row]];
-    if ([contact selected] == YES) {
-        [contact setSelected:NO];
-    } else {
-        [contact setSelected:YES];
-    }
-    [self.friends removeObjectAtIndex:[indexPath row]];
-    [self.friends insertObject:contact atIndex:[indexPath row]];
-    [friendsTableview reloadRowsAtIndexPaths:[NSArray arrayWithObjects:[NSIndexPath indexPathForItem:[indexPath row] inSection:0], nil] withRowAnimation:UITableViewRowAnimationAutomatic];
-    NSMutableArray *friendsArray = [self.friends mutableCopy];
-    NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
-    [[NSNotificationCenter defaultCenter] postNotificationName:RRNotificationSelectFriends object:self userInfo:userInfo];
-}
 #pragma mark - Table data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
@@ -252,78 +237,34 @@ static CGSize keyboardRect;
     return kRowHeight;
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    static NSString* cellIndentifier = @"cellIdentifier";
-    RRContactTableViewCell* cell;
-    if (cell == nil) {
-        cell = [[RRContactTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIndentifier];
-        cell.selectionStyle = UITableViewCellSelectionStyleGray;
-    }
+#pragma mark - Table view cells
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     RRContact *contact = [self.friends objectAtIndex:[indexPath row]];
     if ([contact selected] == YES) {
-        UIImageView *selectedImageview = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"selected"]];
-        [selectedImageview setFrame:CGRectMake(0, 0, 24, 19)];
-        cell.accessoryView = selectedImageview;
+        [contact setSelected:NO];
     } else {
-        UIImageView *selectedImageview = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"unselected"]];
-        [selectedImageview setFrame:CGRectMake(0, 0, 24, 19)];
-        cell.accessoryView = selectedImageview;
+        [contact setSelected:YES];
     }
-    
-    cell.imageView.image = [RRHelper resizeImage:[UIImage imageNamed:@"avatar"] toSize:CGSizeMake(42, 35)];
-    [[cell textLabel] setFont:[UIFont fontWithName:kFontRegular size:kFontSizeListingTextLabel]];
-    [[cell textLabel] setTextColor:[RRHelper darkGrey]];
-    [[cell detailTextLabel] setFont:[UIFont fontWithName:kFontRegular size:kFontSizeListingDetailedTextLabel]];
-    [[cell detailTextLabel] setTextColor:[RRHelper mediumGrey]];
-    
-    if ([contact type] == kRRContactTypeEmail) {
-        [[cell textLabel] setText:[contact email]];
-    } else
-    if ([contact type] == kRRContactTypeAddressBook) {
-        [[cell textLabel] setText:[contact name]];
-        [[cell detailTextLabel] setText:[contact email]];
-        if (contact.picture) {
-            UIImageView * roundedView = [[UIImageView alloc] initWithImage: contact.picture];
-            [roundedView setFrame:CGRectMake(0, 0, 42, 42)];
-            CALayer * l = [roundedView layer];
-            [l setMasksToBounds:YES];
-            [l setCornerRadius:roundedView.frame.size.width / 2.0f];
-            [cell.imageView addSubview:roundedView];
-        }
-    } else
-    if ([contact type] == kRRContactTypeFacebook) {
-        
-        NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
-        attachment.image = [RRHelper resizeImage:[UIImage imageNamed:@"facebook"] toSize:CGSizeMake(16, 16)];
-        NSAttributedString *attachmentString = [NSAttributedString attributedStringWithAttachment:attachment];
-        
-        NSMutableAttributedString *myString= [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@  ", [contact name]] attributes:@{ NSFontAttributeName : [UIFont fontWithName:kFontRegular size:15.0f]}];
-        [myString appendAttributedString:attachmentString];
-        cell.textLabel.attributedText = myString;
-        
-        NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?width=50&height=50", [contact facebookId]]] cachePolicy:NSURLRequestReturnCacheDataElseLoad timeoutInterval:5];
-        __weak UITableViewCell *blockCell = cell;
-        [cell.imageView setImageWithURLRequest:request placeholderImage:cell.imageView.image success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                
-                UIImageView * roundedView = [[UIImageView alloc] initWithImage: image];
-                [roundedView setFrame:CGRectMake(0, 0, 42, 42)];
-                CALayer * l = [roundedView layer];
-                [l setMasksToBounds:YES];
-                [l setCornerRadius:roundedView.frame.size.width / 2.0f];
-                [blockCell.imageView addSubview:roundedView];
-            });
-            
-        } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
-            NSLog(@"not able to download images");
-        }];
+    [self.friends removeObjectAtIndex:[indexPath row]];
+    [self.friends insertObject:contact atIndex:[indexPath row]];
+    [friendsTableview reloadRowsAtIndexPaths:[NSArray arrayWithObjects:[NSIndexPath indexPathForItem:[indexPath row] inSection:0], nil] withRowAnimation:UITableViewRowAnimationAutomatic];
+    NSMutableArray *friendsArray = [self.friends mutableCopy];
+    NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
+    [[NSNotificationCenter defaultCenter] postNotificationName:RRNotificationSelectFriends object:self userInfo:userInfo];
+}
 
-    } if ([contact type] == kRRContactTypeDummy) {
-        cell.textLabel.text = @"";
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    RRContactTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:NSStringFromClass([RRContactTableViewCell class])];
+    if (!cell) {
+        cell = [[RRContactTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:NSStringFromClass([RRContactTableViewCell class])];
+        cell.selectionStyle = UITableViewCellSelectionStyleGray;
     }
     return cell;
 }
 
+-(void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
+    [self setupCell:(RRContactTableViewCell*)cell forIndexPath:indexPath];
+}
 #pragma mark - keyboard helpers
 -(void) dismissKeyboard {
     [self.view sendSubviewToBack:alphaScreen];
@@ -402,6 +343,73 @@ static CGSize keyboardRect;
 }
 
 #pragma mark - Helpers
+-(void) setupCell:(RRContactTableViewCell*) cell forIndexPath:(NSIndexPath*) indexPath {
+    
+    RRContact *contact = [self.friends objectAtIndex:[indexPath row]];
+    if ([contact selected] == YES) {
+        UIImageView *selectedImageview = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"selected"]];
+        [selectedImageview setFrame:CGRectMake(0, 0, 24, 19)];
+        cell.accessoryView = selectedImageview;
+    } else {
+        UIImageView *selectedImageview = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"unselected"]];
+        [selectedImageview setFrame:CGRectMake(0, 0, 24, 19)];
+        cell.accessoryView = selectedImageview;
+    }
+    
+    cell.imageView.image = [RRHelper resizeImage:[UIImage imageNamed:@"avatar"] toSize:CGSizeMake(42, 35)];
+    [[cell textLabel] setFont:[UIFont fontWithName:kFontRegular size:kFontSizeListingTextLabel]];
+    [[cell textLabel] setTextColor:[RRHelper darkGrey]];
+    [[cell detailTextLabel] setFont:[UIFont fontWithName:kFontRegular size:kFontSizeListingDetailedTextLabel]];
+    [[cell detailTextLabel] setTextColor:[RRHelper mediumGrey]];
+    
+    if ([contact type] == kRRContactTypeEmail) {
+        [[cell textLabel] setText:[contact email]];
+    } else
+        if ([contact type] == kRRContactTypeAddressBook) {
+            [[cell textLabel] setText:[contact name]];
+            [[cell detailTextLabel] setText:[contact email]];
+            if (contact.picture) {
+                UIImageView * roundedView = [[UIImageView alloc] initWithImage: contact.picture];
+                [roundedView setFrame:CGRectMake(0, 0, 42, 42)];
+                CALayer * l = [roundedView layer];
+                [l setMasksToBounds:YES];
+                [l setCornerRadius:roundedView.frame.size.width / 2.0f];
+                [cell.imageView addSubview:roundedView];
+            }
+        } else
+            if ([contact type] == kRRContactTypeFacebook) {
+                
+                NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
+                attachment.image = [RRHelper resizeImage:[UIImage imageNamed:@"facebook"] toSize:CGSizeMake(16, 16)];
+                NSAttributedString *attachmentString = [NSAttributedString attributedStringWithAttachment:attachment];
+                
+                NSMutableAttributedString *myString= [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@  ", [contact name]] attributes:@{ NSFontAttributeName : [UIFont fontWithName:kFontRegular size:15.0f]}];
+                [myString appendAttributedString:attachmentString];
+                cell.textLabel.attributedText = myString;
+                
+                NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?width=50&height=50", [contact facebookId]]] cachePolicy:NSURLRequestReturnCacheDataElseLoad timeoutInterval:5];
+                __weak UITableViewCell *blockCell = cell;
+                [cell.imageView setImageWithURLRequest:request placeholderImage:cell.imageView.image success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        
+                        UIImageView * roundedView = [[UIImageView alloc] initWithImage: image];
+                        [roundedView setFrame:CGRectMake(0, 0, 42, 42)];
+                        CALayer * l = [roundedView layer];
+                        [l setMasksToBounds:YES];
+                        [l setCornerRadius:roundedView.frame.size.width / 2.0f];
+                        [blockCell.imageView addSubview:roundedView];
+                        
+                    });
+                    
+                } failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+                    NSLog(@"not able to download images");
+                }];
+                
+            } if ([contact type] == kRRContactTypeDummy) {
+                cell.textLabel.text = @"";
+            }
+}
+
 -(void) showError:(NSString*) message {
     UIAlertView *cantAddContactAlert = [[UIAlertView alloc] initWithTitle: @"Please take note" message: message delegate:nil cancelButtonTitle: @"OK" otherButtonTitles: nil];
     [cantAddContactAlert show];

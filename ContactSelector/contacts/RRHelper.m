@@ -38,4 +38,23 @@
     }
     return NO;
 }
++(void) permissionForAccessingAddressbook:(RRCallback) callback {
+    switch (ABAddressBookGetAuthorizationStatus()) {
+        case kABAuthorizationStatusDenied:
+        case kABAuthorizationStatusRestricted:{
+            callback(NO, nil);
+        }
+        case kABAuthorizationStatusAuthorized:
+            callback(YES, nil);
+        default:{
+            ABAddressBookRequestAccessWithCompletion(ABAddressBookCreateWithOptions(NULL, nil), ^(bool granted, CFErrorRef error) {
+                if (!granted){
+                    callback(NO, nil);
+                } else {
+                    callback(YES, nil);
+                }
+            });
+        }
+    }
+}
 @end

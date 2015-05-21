@@ -8,13 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-typedef enum {
-    kRRContactTypeFacebook = 0,
-    kRRContactTypeAddressBook = 1,
-    kRRContactTypeEmail = 2,
-    RRContactTypeDummy
-} RRContactType;
-
 @interface RRContact : NSObject
 @property (nonatomic, strong) NSString* email;
 @property (nonatomic, strong) NSString* facebookId;

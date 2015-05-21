@@ -182,9 +182,10 @@ static CGSize keyboardRect;
             if (error) {
                 callback(NO, @"session is open but error getting friends");
             }else{
+                // need to change this into a set for quicker access
                 NSArray* friends = [result objectForKey:@"data"];
                 for (NSDictionary<FBGraphUser>* friend in friends) {
-                    if ([self isContactPresent:[friend objectID]] == NO) {
+                    if ([weakSelf isContactPresent:[friend objectID]] == NO) {
                         RRContact* contact = [[RRContact alloc] init];
                         [contact setType:kRRContactTypeFacebook];
                         [contact setFacebookId:[friend objectID]];

@@ -9,9 +9,9 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 typedef enum {
-    RRContactTypeFacebook = 0,
-    RRContactTypeAddressBook = 1,
-    RRContactTypeEmail = 2,
+    kRRContactTypeFacebook = 0,
+    kRRContactTypeAddressBook = 1,
+    kRRContactTypeEmail = 2,
     RRContactTypeDummy
 } RRContactType;
 

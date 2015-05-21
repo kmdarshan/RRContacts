@@ -120,7 +120,7 @@ static CGSize keyboardRect;
         RRContact *contact = [RRContact new];
         [contact setEmail:[addEmailTextfield text]];
         [contact setSelected:YES];
-        [contact setType:RRContactTypeEmail];
+        [contact setType:kRRContactTypeEmail];
         [self.friends insertObject:contact atIndex:1];
         [friendsTableview reloadData];
         NSMutableArray *friendsArray = [self.friends mutableCopy];
@@ -175,7 +175,7 @@ static CGSize keyboardRect;
         for (int emailIndex = 0; emailIndex < ABMultiValueGetCount(emailMultiValueRef); emailIndex++) {
             NSString *email = (__bridge_transfer NSString *)ABMultiValueCopyValueAtIndex(emailMultiValueRef, emailIndex);
             [contact setEmail:email];
-            [contact setType:RRContactTypeAddressBook];
+            [contact setType:kRRContactTypeAddressBook];
             [contact setSelected:NO];
             bHasEmail = YES;
             break;
@@ -221,7 +221,7 @@ static CGSize keyboardRect;
                 for (NSDictionary<FBGraphUser>* friend in friends) {
                     if ([self isContactPresent:[friend objectID]] == NO) {
                         RRContact* contact = [[RRContact alloc] init];
-                        [contact setType:RRContactTypeFacebook];
+                        [contact setType:kRRContactTypeFacebook];
                         [contact setFacebookId:[friend objectID]];
                         [contact setName:[NSString stringWithFormat:@"%@", [friend name]]];
                         [contact setSelected:NO];
@@ -235,7 +235,7 @@ static CGSize keyboardRect;
 }
 -(BOOL) isContactPresent:(NSString*) objectId {
     for (RRContact *contact in self.friends) {
-        if ([contact type] == RRContactTypeFacebook) {
+        if ([contact type] == kRRContactTypeFacebook) {
             if ([[[contact facebookId] lowercaseString] isEqualToString:[objectId lowercaseString]]) {
                 return YES;
             }
@@ -311,10 +311,10 @@ static CGSize keyboardRect;
     [[cell detailTextLabel] setFont:[UIFont fontWithName:kFontRegular size:kFontSizeListingDetailedTextLabel]];
     [[cell detailTextLabel] setTextColor:[RRHelper mediumGrey]];
     
-    if ([contact type] == RRContactTypeEmail) {
+    if ([contact type] == kRRContactTypeEmail) {
         [[cell textLabel] setText:[contact email]];
     } else
-    if ([contact type] == RRContactTypeAddressBook) {
+    if ([contact type] == kRRContactTypeAddressBook) {
         [[cell textLabel] setText:[contact name]];
         [[cell detailTextLabel] setText:[contact email]];
         if (contact.picture) {
@@ -326,7 +326,7 @@ static CGSize keyboardRect;
             [cell.imageView addSubview:roundedView];
         }
     } else
-    if ([contact type] == RRContactTypeFacebook) {
+    if ([contact type] == kRRContactTypeFacebook) {
         
         NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
         attachment.image = [RRHelper resizeImage:[UIImage imageNamed:@"facebook"] toSize:CGSizeMake(16, 16)];
@@ -353,7 +353,7 @@ static CGSize keyboardRect;
             NSLog(@"not able to download images");
         }];
 
-    } if ([contact type] == RRContactTypeDummy) {
+    } if ([contact type] == kRRContactTypeDummy) {
         cell.textLabel.text = @"";
     }
     return cell;
@@ -372,7 +372,7 @@ static CGSize keyboardRect;
         RRContact *contact = [RRContact new];
         [contact setEmail:[addEmailTextfield text]];
         [contact setSelected:YES];
-        [contact setType:RRContactTypeEmail];
+        [contact setType:kRRContactTypeEmail];
         [self.friends insertObject:contact atIndex:1];
         [friendsTableview reloadData];
         NSMutableArray *friendsArray = [self.friends mutableCopy];
@@ -434,6 +434,12 @@ static CGSize keyboardRect;
     }
     self.view.frame = rect;
     [UIView commitAnimations];
+}
+
+#pragma mark - Helpers
+-(void) showError:(NSString*) message {
+    UIAlertView *cantAddContactAlert = [[UIAlertView alloc] initWithTitle: @"Please take note" message: message delegate:nil cancelButtonTitle: @"OK" otherButtonTitles: nil];
+    [cantAddContactAlert show];
 }
 
 - (void)didReceiveMemoryWarning {

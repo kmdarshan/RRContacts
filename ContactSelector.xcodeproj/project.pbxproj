@@ -206,7 +206,7 @@
 			isa = PBXGroup;
 			children = (
 				7D5D086F1B0D92AE001F9976 /* Launch Screen.xib */,
-				B0F28D5B1A7F3B3E00045B62 /* contacts */,
+				B0F28D5B1A7F3B3E00045B62 /* RRContacts */,
 				B0F28D481A7ED77400045B62 /* frameworks */,
 				B0F28CDC1A7ECF9B00045B62 /* AppDelegate.h */,
 				B0F28CDD1A7ECF9B00045B62 /* AppDelegate.m */,
@@ -310,7 +310,7 @@
 			path = ..;
 			sourceTree = "<group>";
 		};
-		B0F28D5B1A7F3B3E00045B62 /* contacts */ = {
+		B0F28D5B1A7F3B3E00045B62 /* RRContacts */ = {
 			isa = PBXGroup;
 			children = (
 				B0F28D5C1A7F3B3E00045B62 /* resources */,
@@ -319,6 +319,7 @@
 				7D5D08731B0D9484001F9976 /* views */,
 				7D5D08711B0D943C001F9976 /* utilities */,
 			);
+			name = RRContacts;
 			path = contacts;
 			sourceTree = "<group>";
 		};

@@ -150,6 +150,35 @@
 			name = models;
 			sourceTree = "<group>";
 		};
+		7D5D08711B0D943C001F9976 /* utilities */ = {
+			isa = PBXGroup;
+			children = (
+				B0F28D641A7F3B3E00045B62 /* RRHelper.h */,
+				B0F28D651A7F3B3E00045B62 /* RRHelper.m */,
+				B0F28D681A7F3B3E00045B62 /* UIColor_categories.h */,
+				B0F28D691A7F3B3E00045B62 /* UIColor_categories.m */,
+			);
+			name = utilities;
+			sourceTree = "<group>";
+		};
+		7D5D08721B0D9472001F9976 /* controllers */ = {
+			isa = PBXGroup;
+			children = (
+				B0F28D601A7F3B3E00045B62 /* RRAddFriendsViewController.h */,
+				B0F28D611A7F3B3E00045B62 /* RRAddFriendsViewController.m */,
+			);
+			name = controllers;
+			sourceTree = "<group>";
+		};
+		7D5D08731B0D9484001F9976 /* views */ = {
+			isa = PBXGroup;
+			children = (
+				B0F28D661A7F3B3E00045B62 /* RRTextField.h */,
+				B0F28D671A7F3B3E00045B62 /* RRTextField.m */,
+			);
+			name = views;
+			sourceTree = "<group>";
+		};
 		B0F28CCC1A7ECF9B00045B62 = {
 			isa = PBXGroup;
 			children = (
@@ -280,15 +309,10 @@
 			isa = PBXGroup;
 			children = (
 				B0F28D5C1A7F3B3E00045B62 /* resources */,
-				B0F28D601A7F3B3E00045B62 /* RRAddFriendsViewController.h */,
-				B0F28D611A7F3B3E00045B62 /* RRAddFriendsViewController.m */,
+				7D5D08721B0D9472001F9976 /* controllers */,
 				7D5D086C1B0D8CCD001F9976 /* models */,
-				B0F28D641A7F3B3E00045B62 /* RRHelper.h */,
-				B0F28D651A7F3B3E00045B62 /* RRHelper.m */,
-				B0F28D661A7F3B3E00045B62 /* RRTextField.h */,
-				B0F28D671A7F3B3E00045B62 /* RRTextField.m */,
-				B0F28D681A7F3B3E00045B62 /* UIColor_categories.h */,
-				B0F28D691A7F3B3E00045B62 /* UIColor_categories.m */,
+				7D5D08731B0D9484001F9976 /* views */,
+				7D5D08711B0D943C001F9976 /* utilities */,
 			);
 			path = contacts;
 			sourceTree = "<group>";

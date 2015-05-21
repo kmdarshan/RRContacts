@@ -129,28 +129,7 @@ static CGSize keyboardRect;
     }
 }
 
-#pragma mark - data loaders
--(void) checkPermissionForAccessingAddressbook {
-    if (ABAddressBookGetAuthorizationStatus() == kCLAuthorizationStatusDenied ||
-        ABAddressBookGetAuthorizationStatus() == kCLAuthorizationStatusRestricted){
-        UIAlertView *cantAddContactAlert = [[UIAlertView alloc] initWithTitle: @"Cannot Add Contact" message: @"You must give the app permission to add the contact first." delegate:nil cancelButtonTitle: @"OK" otherButtonTitles: nil];
-        [cantAddContactAlert show];
-    } else if (ABAddressBookGetAuthorizationStatus() == kCLAuthorizationStatusAuthorizedAlways){
-        [self loadAddressBookContacts];
-    } else{
-        ABAddressBookRequestAccessWithCompletion(ABAddressBookCreateWithOptions(NULL, nil), ^(bool granted, CFErrorRef error) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (!granted){
-                    UIAlertView *cantAddContactAlert = [[UIAlertView alloc] initWithTitle: @"Cannot Add Contact" message: @"You must give the app permission to add the contact first." delegate:nil cancelButtonTitle: @"OK" otherButtonTitles: nil];
-                    [cantAddContactAlert show];
-                } else {
-                    [self loadAddressBookContacts];
-                }
-            });
-        });
-    }
-}
-
+#pragma mark - Contacts
 -(void) loadAddressBookContacts {
     ABAddressBookRef addressBookRef = ABAddressBookCreateWithOptions(NULL, nil);
     NSArray *allContacts = (__bridge NSArray *)ABAddressBookCopyArrayOfAllPeople(addressBookRef);

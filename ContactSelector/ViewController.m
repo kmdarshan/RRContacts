@@ -33,9 +33,7 @@
     RRAddFriendsViewController *addFriendsController = [RRAddFriendsViewController new];
 //    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self];
 //    [navigationController pushViewController:addFriendsController animated:YES];
-    [self presentViewController:addFriendsController animated:YES completion:^{
-        
-    }];
+    [self presentViewController:addFriendsController animated:YES completion:nil];
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

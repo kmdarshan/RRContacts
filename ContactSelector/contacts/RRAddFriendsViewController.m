@@ -92,7 +92,7 @@ static CGSize keyboardRect;
     [alphaScreen setBackgroundColor:[UIColor clearColor]];
     [self.view addSubview:alphaScreen];
     
-    friendsTableview = [[UITableView alloc] initWithFrame:CGRectMake(mainViewPaddingX, self.view.frame.origin.y, self.view.frame.size.width - (mainViewPaddingX*2), alphaScreen.frame.size.height) style:UITableViewStylePlain];
+    friendsTableview = [[UITableView alloc] initWithFrame:CGRectMake(kMainViewPaddingX , self.view.frame.origin.y, self.view.frame.size.width - (kMainViewPaddingX *2), alphaScreen.frame.size.height) style:UITableViewStylePlain];
     [friendsTableview setDelegate:self];
     [friendsTableview setDataSource:self];
     [self.view insertSubview:friendsTableview aboveSubview:alphaScreen];
@@ -125,7 +125,7 @@ static CGSize keyboardRect;
         [friendsTableview reloadData];
         NSMutableArray *friendsArray = [self.friends mutableCopy];
         NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
-        [[NSNotificationCenter defaultCenter] postNotificationName:notificationSelectFriends object:self userInfo:userInfo];
+        [[NSNotificationCenter defaultCenter] postNotificationName:RRNotificationSelectFriends object:self userInfo:userInfo];
     }
 }
 
@@ -267,7 +267,7 @@ static CGSize keyboardRect;
     [friendsTableview reloadRowsAtIndexPaths:[NSArray arrayWithObjects:[NSIndexPath indexPathForItem:[indexPath row] inSection:0], nil] withRowAnimation:UITableViewRowAnimationAutomatic];
     NSMutableArray *friendsArray = [self.friends mutableCopy];
     NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
-    [[NSNotificationCenter defaultCenter] postNotificationName:notificationSelectFriends object:self userInfo:userInfo];
+    [[NSNotificationCenter defaultCenter] postNotificationName:RRNotificationSelectFriends object:self userInfo:userInfo];
 }
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
@@ -377,7 +377,7 @@ static CGSize keyboardRect;
         [friendsTableview reloadData];
         NSMutableArray *friendsArray = [self.friends mutableCopy];
         NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
-        [[NSNotificationCenter defaultCenter] postNotificationName:notificationSelectFriends object:self userInfo:userInfo];
+        [[NSNotificationCenter defaultCenter] postNotificationName:RRNotificationSelectFriends object:self userInfo:userInfo];
         [self performSelector:@selector(animateEmailCell) withObject:nil afterDelay:0.5f];
     }
     return YES;

@@ -67,7 +67,7 @@
 
 - (CGRect) leftViewRectForBounds:(CGRect)bounds {
     CGRect textRect = [super leftViewRectForBounds:bounds];
-    textRect.origin.x = textRect.origin.x + mainViewPaddingX + 10;
+    textRect.origin.x = textRect.origin.x + kMainViewPaddingX  + 10;
     return textRect;
 }
 @end

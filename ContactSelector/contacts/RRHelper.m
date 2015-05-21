@@ -30,10 +30,4 @@
 +(UIColor*) appBlue {
     return [UIColor colorWithHexString:@"#4bb5c1"];
 }
-+(UIColor*) greenColor {
-    return [UIColor colorWithHexString:@"#00a651"];
-}
-+(UIColor*) redColor {
-    return [UIColor colorWithHexString:@"#ef3b42"];
-}
 @end

@@ -6,15 +6,16 @@
 //  Copyright (c) 2014 Happy Days. All rights reserved.
 //
 
-#import "RRAddFriendsViewController.h"
+#import "RRContactsViewController.h"
 #import "RRTextField.h"
 #import "RRContact.h"
 #import <AddressBook/AddressBook.h>
 #import <AddressBookUI/AddressBookUI.h>
 #import <FacebookSDK/FacebookSDK.h>
 #import "UIImageView+AFNetworking.h"
+#import "RRContactTableViewCell.h"
 static CGSize keyboardRect;
-@interface RRAddFriendsViewController ()
+@interface RRContactsViewController ()
 {
     RRTextField* addEmailTextfield;
     UITableView* friendsTableview;
@@ -22,7 +23,7 @@ static CGSize keyboardRect;
 }
 @end
 
-@implementation RRAddFriendsViewController
+@implementation RRContactsViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -181,7 +182,6 @@ static CGSize keyboardRect;
             if (error) {
                 callback(NO, @"session is open but error getting friends");
             }else{
-                NSLog(@"session is open and success");
                 NSArray* friends = [result objectForKey:@"data"];
                 for (NSDictionary<FBGraphUser>* friend in friends) {
                     if ([self isContactPresent:[friend objectID]] == NO) {
@@ -233,6 +233,7 @@ static CGSize keyboardRect;
     NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
     [[NSNotificationCenter defaultCenter] postNotificationName:RRNotificationSelectFriends object:self userInfo:userInfo];
 }
+#pragma mark - Table data source
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
 }
@@ -253,9 +254,9 @@ static CGSize keyboardRect;
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     static NSString* cellIndentifier = @"cellIdentifier";
-    UITableViewCell * cell;
+    RRContactTableViewCell* cell;
     if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIndentifier];
+        cell = [[RRContactTableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellIndentifier];
         cell.selectionStyle = UITableViewCellSelectionStyleGray;
     }
     RRContact *contact = [self.friends objectAtIndex:[indexPath row]];

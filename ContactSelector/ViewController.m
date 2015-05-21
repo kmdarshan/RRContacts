@@ -7,7 +7,7 @@
 //
 
 #import "ViewController.h"
-#import "RRAddFriendsViewController.h"
+#import "RRContactsViewController.h"
 @interface ViewController ()
 
 @end
@@ -30,7 +30,7 @@
     [self.view addSubview:button];
 }
 -(void) showContacts {
-    RRAddFriendsViewController *addFriendsController = [RRAddFriendsViewController new];
+    RRContactsViewController *addFriendsController = [RRContactsViewController new];
 //    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self];
 //    [navigationController pushViewController:addFriendsController animated:YES];
     [self presentViewController:addFriendsController animated:YES completion:nil];

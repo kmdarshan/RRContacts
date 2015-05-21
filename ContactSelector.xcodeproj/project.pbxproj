@@ -37,7 +37,7 @@
 		B0F28D6A1A7F3B3E00045B62 /* avatar.png in Resources */ = {isa = PBXBuildFile; fileRef = B0F28D5D1A7F3B3E00045B62 /* avatar.png */; };
 		B0F28D6B1A7F3B3E00045B62 /* selected.png in Resources */ = {isa = PBXBuildFile; fileRef = B0F28D5E1A7F3B3E00045B62 /* selected.png */; };
 		B0F28D6C1A7F3B3E00045B62 /* unselected.png in Resources */ = {isa = PBXBuildFile; fileRef = B0F28D5F1A7F3B3E00045B62 /* unselected.png */; };
-		B0F28D6D1A7F3B3E00045B62 /* RRAddFriendsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B0F28D611A7F3B3E00045B62 /* RRAddFriendsViewController.m */; };
+		B0F28D6D1A7F3B3E00045B62 /* RRContactsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B0F28D611A7F3B3E00045B62 /* RRContactsViewController.m */; };
 		B0F28D6E1A7F3B3E00045B62 /* RRContact.m in Sources */ = {isa = PBXBuildFile; fileRef = B0F28D631A7F3B3E00045B62 /* RRContact.m */; };
 		B0F28D6F1A7F3B3E00045B62 /* RRHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = B0F28D651A7F3B3E00045B62 /* RRHelper.m */; };
 		B0F28D701A7F3B3E00045B62 /* RRTextField.m in Sources */ = {isa = PBXBuildFile; fileRef = B0F28D671A7F3B3E00045B62 /* RRTextField.m */; };
@@ -112,8 +112,8 @@
 		B0F28D5D1A7F3B3E00045B62 /* avatar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = avatar.png; sourceTree = "<group>"; };
 		B0F28D5E1A7F3B3E00045B62 /* selected.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = selected.png; sourceTree = "<group>"; };
 		B0F28D5F1A7F3B3E00045B62 /* unselected.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = unselected.png; sourceTree = "<group>"; };
-		B0F28D601A7F3B3E00045B62 /* RRAddFriendsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RRAddFriendsViewController.h; sourceTree = "<group>"; };
-		B0F28D611A7F3B3E00045B62 /* RRAddFriendsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RRAddFriendsViewController.m; sourceTree = "<group>"; };
+		B0F28D601A7F3B3E00045B62 /* RRContactsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RRContactsViewController.h; sourceTree = "<group>"; };
+		B0F28D611A7F3B3E00045B62 /* RRContactsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RRContactsViewController.m; sourceTree = "<group>"; };
 		B0F28D621A7F3B3E00045B62 /* RRContact.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RRContact.h; sourceTree = "<group>"; };
 		B0F28D631A7F3B3E00045B62 /* RRContact.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RRContact.m; sourceTree = "<group>"; };
 		B0F28D641A7F3B3E00045B62 /* RRHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RRHelper.h; sourceTree = "<group>"; };
@@ -167,8 +167,8 @@
 		7D5D08721B0D9472001F9976 /* controllers */ = {
 			isa = PBXGroup;
 			children = (
-				B0F28D601A7F3B3E00045B62 /* RRAddFriendsViewController.h */,
-				B0F28D611A7F3B3E00045B62 /* RRAddFriendsViewController.m */,
+				B0F28D601A7F3B3E00045B62 /* RRContactsViewController.h */,
+				B0F28D611A7F3B3E00045B62 /* RRContactsViewController.m */,
 			);
 			name = controllers;
 			sourceTree = "<group>";
@@ -443,7 +443,7 @@
 				B0F28D3D1A7ED50900045B62 /* AFNetworkReachabilityManager.m in Sources */,
 				B0F28D3A1A7ED50900045B62 /* AFHTTPRequestOperation.m in Sources */,
 				B0F28D401A7ED50900045B62 /* AFURLRequestSerialization.m in Sources */,
-				B0F28D6D1A7F3B3E00045B62 /* RRAddFriendsViewController.m in Sources */,
+				B0F28D6D1A7F3B3E00045B62 /* RRContactsViewController.m in Sources */,
 				B0F28D6F1A7F3B3E00045B62 /* RRHelper.m in Sources */,
 				B0F28D3F1A7ED50900045B62 /* AFURLConnectionOperation.m in Sources */,
 				B0F28D421A7ED50900045B62 /* AFURLSessionManager.m in Sources */,

@@ -8,6 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface RRAddFriendsViewController : UIViewController<UITextFieldDelegate, UITableViewDataSource, UITableViewDelegate>
+@interface RRContactsViewController : UIViewController<UITextFieldDelegate, UITableViewDataSource, UITableViewDelegate>
 @property (nonatomic, strong) NSMutableArray *friends;
 @end

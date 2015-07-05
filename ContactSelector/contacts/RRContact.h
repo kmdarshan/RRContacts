@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-@interface RRContact : NSObject
+@interface RRContact : NSObject <NSCoding>
 @property (nonatomic, strong) NSString* email;
 @property (nonatomic, strong) NSString* facebookId;
 @property (nonatomic, strong) NSString* name;

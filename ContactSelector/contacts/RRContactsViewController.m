@@ -15,12 +15,19 @@
 #import "UIImageView+AFNetworking.h"
 #import "RRContactTableViewCell.h"
 static CGSize keyboardRect;
-@interface RRContactsViewController ()
+@interface RRContactsViewController ()<UISearchBarDelegate, UISearchControllerDelegate, UISearchResultsUpdating>
 {
     RRTextField* addEmailTextfield;
     UITableView* friendsTableview;
     UIView *alphaScreen;
+    NSMutableArray *originalFriendsArray;
 }
+@property (nonatomic, strong) UISearchController *searchController;
+
+// for state restoration
+@property BOOL searchControllerWasActive;
+@property BOOL searchControllerSearchFieldWasFirstResponder;
+
 @end
 
 @implementation RRContactsViewController
@@ -29,8 +36,120 @@ static CGSize keyboardRect;
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self setup];
+    [self setupSearch];
 }
 
+-(void) setupSearch {
+    [friendsTableview setContentInset:UIEdgeInsetsMake(60, 0, 0, 0)];
+    _searchController = [[UISearchController alloc] initWithSearchResultsController:nil];
+    self.searchController.searchResultsUpdater = self;
+    [self.searchController.searchBar sizeToFit];
+    friendsTableview.tableHeaderView = self.searchController.searchBar;
+    
+    // we want to be the delegate for our filtered table so didSelectRowAtIndexPath is called for both tables
+    self.searchController.delegate = self;
+    self.searchController.dimsBackgroundDuringPresentation = NO; // default is YES
+    self.searchController.searchBar.delegate = self; // so we can monitor text changes + others
+    self.searchController.hidesNavigationBarDuringPresentation = NO;
+
+}
+- (void)updateSearchResultsForSearchController:(UISearchController *)searchController {
+    // update the filtered array based on the search text
+    NSString *searchText = searchController.searchBar.text;
+    NSMutableArray *searchResults = [originalFriendsArray mutableCopy];
+    
+    // strip out all the leading and trailing spaces
+    NSString *strippedString = [searchText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    
+    // break up the search terms (separated by spaces)
+    NSArray *searchItems = nil;
+    if (strippedString.length > 0) {
+        searchItems = [strippedString componentsSeparatedByString:@" "];
+    }
+    
+    // build all the "AND" expressions for each value in the searchString
+    //
+    NSMutableArray *andMatchPredicates = [NSMutableArray array];
+    
+    for (NSString *searchString in searchItems) {
+        // each searchString creates an OR predicate for: name, yearIntroduced, introPrice
+        //
+        // example if searchItems contains "iphone 599 2007":
+        //      name CONTAINS[c] "iphone"
+        //      name CONTAINS[c] "599", yearIntroduced ==[c] 599, introPrice ==[c] 599
+        //      name CONTAINS[c] "2007", yearIntroduced ==[c] 2007, introPrice ==[c] 2007
+        //
+        NSMutableArray *searchItemsPredicate = [NSMutableArray array];
+        
+        // Below we use NSExpression represent expressions in our predicates.
+        // NSPredicate is made up of smaller, atomic parts: two NSExpressions (a left-hand value and a right-hand value)
+        
+        // name field matching
+        NSExpression *lhs = [NSExpression expressionForKeyPath:@"email"];
+        NSExpression *rhs = [NSExpression expressionForConstantValue:searchString];
+        NSPredicate *finalPredicate = [NSComparisonPredicate
+                                       predicateWithLeftExpression:lhs
+                                       rightExpression:rhs
+                                       modifier:NSDirectPredicateModifier
+                                       type:NSContainsPredicateOperatorType
+                                       options:NSCaseInsensitivePredicateOption];
+        [searchItemsPredicate addObject:finalPredicate];
+
+        lhs = [NSExpression expressionForKeyPath:@"name"];
+        rhs = [NSExpression expressionForConstantValue:searchString];
+        finalPredicate = [NSComparisonPredicate
+                                       predicateWithLeftExpression:lhs
+                                       rightExpression:rhs
+                                       modifier:NSDirectPredicateModifier
+                                       type:NSContainsPredicateOperatorType
+                                       options:NSCaseInsensitivePredicateOption];
+        [searchItemsPredicate addObject:finalPredicate];
+
+        // yearIntroduced field matching
+//        NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
+//        [numberFormatter setNumberStylse:NSNumberFormatterNoStyle];
+//        NSNumber *targetNumber = [numberFormatter numberFromString:searchString];
+//        if (targetNumber != nil) {   // searchString may not convert to a number
+//            lhs = [NSExpression expressionForKeyPath:@"yearIntroduced"];
+//            rhs = [NSExpression expressionForConstantValue:targetNumber];
+//            finalPredicate = [NSComparisonPredicate
+//                              predicateWithLeftExpression:lhs
+//                              rightExpression:rhs
+//                              modifier:NSDirectPredicateModifier
+//                              type:NSEqualToPredicateOperatorType
+//                              options:NSCaseInsensitivePredicateOption];
+//            [searchItemsPredicate addObject:finalPredicate];
+//            
+//            // price field matching
+//            lhs = [NSExpression expressionForKeyPath:@"introPrice"];
+//            rhs = [NSExpression expressionForConstantValue:targetNumber];
+//            finalPredicate = [NSComparisonPredicate
+//                              predicateWithLeftExpression:lhs
+//                              rightExpression:rhs
+//                              modifier:NSDirectPredicateModifier
+//                              type:NSEqualToPredicateOperatorType
+//                              options:NSCaseInsensitivePredicateOption];
+//            [searchItemsPredicate addObject:finalPredicate];
+//        }
+        
+        // at this OR predicate to our master AND predicate
+        NSCompoundPredicate *orMatchPredicates = [NSCompoundPredicate orPredicateWithSubpredicates:searchItemsPredicate];
+        [andMatchPredicates addObject:orMatchPredicates];
+    }
+    
+    // match up the fields of the Product object
+    NSCompoundPredicate *finalCompoundPredicate =
+    [NSCompoundPredicate andPredicateWithSubpredicates:andMatchPredicates];
+    searchResults = [[searchResults filteredArrayUsingPredicate:finalCompoundPredicate] mutableCopy];
+    NSLog(@"search %d ",[searchResults count]);
+    // hand over the filtered results to our search results table
+//    APLResultsTableController *tableController = (APLResultsTableController *)self.searchController.searchResultsController;
+//    tableController.filteredProducts = searchResults;
+    [self.friends removeAllObjects];
+    [self.friends addObjectsFromArray:searchResults];
+    [friendsTableview reloadData];
+    
+}
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
@@ -73,7 +192,7 @@ static CGSize keyboardRect;
 //        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 //        NSLog(@"finished up group dispatch");
         [self callAddressBook];
-        [self callFacebook];
+        // [self callFacebook];
     }
 }
 
@@ -208,11 +327,11 @@ static CGSize keyboardRect;
     return [self.friends count];
 }
 -(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    return 44.0f;
+    return 0.0f;
 }
 -(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 44.0f)];
-    [view setBackgroundColor:[UIColor clearColor]];
+    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 0.0f)];
+    [view setBackgroundColor:[UIColor blackColor]];
     return view;
 }
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -353,6 +472,7 @@ static CGSize keyboardRect;
         if (success) {
             // load contacts from address book
             weakSelf.friends = [[RRHelper contactsFromAddressBook] mutableCopy];
+            originalFriendsArray = [weakSelf.friends mutableCopy];
             [weakSelf sortFriends];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [blockFriendsTableView reloadData];

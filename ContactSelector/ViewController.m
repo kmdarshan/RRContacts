@@ -29,11 +29,15 @@
     [button addTarget:self action:@selector(showContacts) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:button];
 }
+
+-(void)viewDidAppear:(BOOL)animated {
+    [self showContacts];
+}
 -(void) showContacts {
     RRContactsViewController *addFriendsController = [RRContactsViewController new];
-//    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:self];
-//    [navigationController pushViewController:addFriendsController animated:YES];
-    [self presentViewController:addFriendsController animated:YES completion:nil];
+    UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:addFriendsController];
+    //[navigationController pushViewController:addFriendsController animated:YES];
+    [self presentViewController:navigationController animated:YES completion:nil];
 }
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

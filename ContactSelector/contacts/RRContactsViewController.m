@@ -21,8 +21,11 @@ static CGSize keyboardRect;
     UITableView* friendsTableview;
     UIView *alphaScreen;
     NSMutableArray *originalFriendsArray;
+    NSMutableDictionary *alphaDictionary;
+    NSMutableArray *tableData;
 }
 @property (nonatomic, strong) UISearchController *searchController;
+@property (nonatomic, strong) UILocalizedIndexedCollation *collation;
 
 // for state restoration
 @property BOOL searchControllerWasActive;
@@ -193,12 +196,105 @@ static CGSize keyboardRect;
 //        NSLog(@"finished up group dispatch");
         [self callAddressBook];
         // [self callFacebook];
+        // [self formatFriendsListBasedOnAlphabets];
     }
+}
+
+-(NSMutableArray *)partitionObjects:(NSMutableArray *)array collationStringSelector:(SEL)selector
+
+{
+    NSInteger sectionTitlesCount = [[[UILocalizedIndexedCollation currentCollation] sectionTitles] count];
+    
+    NSMutableArray *mutableSections = [[NSMutableArray alloc] initWithCapacity:sectionTitlesCount];
+    for (NSUInteger idx = 0; idx < sectionTitlesCount; idx++) {
+        [mutableSections addObject:[NSMutableArray array]];
+    }
+    
+    for (id object in array) {
+        NSInteger sectionNumber = [[UILocalizedIndexedCollation currentCollation] sectionForObject:object collationStringSelector:selector];
+        [[mutableSections objectAtIndex:sectionNumber] addObject:object];
+    }
+    
+    for (NSUInteger idx = 0; idx < sectionTitlesCount; idx++) {
+        NSMutableArray *objectsForSection = [mutableSections objectAtIndex:idx];
+        NSMutableArray *sortedObjects = [[[UILocalizedIndexedCollation currentCollation] sortedArrayFromArray:objectsForSection collationStringSelector:selector] mutableCopy];
+        [mutableSections replaceObjectAtIndex:idx withObject:sortedObjects];
+    }
+    return mutableSections;
+    
+    UILocalizedIndexedCollation *collation = [UILocalizedIndexedCollation currentCollation];
+    NSInteger sectionCount = [[collation sectionTitles] count]; //section count is take from sectionTitles and not sectionIndexTitles
+    NSMutableArray *unsortedSections = [NSMutableArray arrayWithCapacity:sectionCount];
+    
+    //create an array to hold the data for each section
+    for(int i = 0; i < sectionCount; i++)
+    {
+        [unsortedSections addObject:[NSMutableArray array]];
+    }
+    
+    //put each object into a section
+    for (id object in array)
+    {
+        NSInteger index = [collation sectionForObject:object collationStringSelector:selector];
+        [[unsortedSections objectAtIndex:index] addObject:object];
+    }
+    
+    NSMutableArray *sections = [NSMutableArray arrayWithCapacity:sectionCount];
+    
+    //sort each section
+    for (NSMutableArray *section in unsortedSections)
+    {
+        [sections addObject:[collation sortedArrayFromArray:section collationStringSelector:selector]];
+    }
+    
+    return sections;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView
+sectionForSectionIndexTitle:(NSString *)title
+               atIndex:(NSInteger)index
+{
+    return [[UILocalizedIndexedCollation currentCollation] sectionForSectionIndexTitleAtIndex:index];
+}
+
+- (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
+//    if ([tableData count] > section) {
+//        if([[tableData objectAtIndex:section] count] > 0 ) {
+            return [[self.collation sectionTitles] objectAtIndex:section];
+//        }
+//    }
+    return nil;
+}
+
+- (NSArray *)sectionIndexTitlesForTableView:(UITableView *)tableView {
+    return [self.collation sectionIndexTitles];
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+//    NSInteger sections = 0;
+//    for (NSMutableArray *section in tableData){
+//        if ([section count] > 0) {
+//            sections++;
+//        }
+//    }
+//    NSLog(@"sec %d ",sections);
+//    return sections;
+    return [[self.collation sectionTitles] count];
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    if ([tableData count] > section) {
+        return [[tableData objectAtIndex:section] count];
+    }
+    return 0;
 }
 
 #pragma mark - Setup
 -(void) setup {
-    
+    alphaDictionary = [NSMutableDictionary new];
+    tableData = [NSMutableArray new];
+    self.collation = [UILocalizedIndexedCollation currentCollation];
     self.navigationController.navigationBar.topItem.title = @"";
     self.navigationItem.title = kAddFriends;
     
@@ -240,19 +336,20 @@ static CGSize keyboardRect;
 }
 
 #pragma mark - Text field
--(void) addEmail:(UITapGestureRecognizer*) recognizer {
-    if ([[addEmailTextfield text] length] > 0) {
-        RRContact *contact = [RRContact new];
-        [contact setEmail:[addEmailTextfield text]];
-        [contact setSelected:YES];
-        [contact setType:kRRContactTypeEmail];
-        [self.friends insertObject:contact atIndex:1];
-        [friendsTableview reloadData];
-        NSMutableArray *friendsArray = [self.friends mutableCopy];
-        NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
-        [[NSNotificationCenter defaultCenter] postNotificationName:RRNotificationSelectFriends object:self userInfo:userInfo];
-    }
-}
+//-(void) addEmail:(UITapGestureRecognizer*) recognizer {
+//    if ([[addEmailTextfield text] length] > 0) {
+//        RRContact *contact = [RRContact new];
+//        [contact setEmail:[addEmailTextfield text]];
+//        [contact setSelected:YES];
+//        [contact setType:kRRContactTypeEmail];
+//        [self.friends insertObject:contact atIndex:1];
+//        tableData = [self partitionObjects:self.friends collationStringSelector:@selector(name)];
+//        [friendsTableview reloadData];
+//        NSMutableArray *friendsArray = [self.friends mutableCopy];
+//        NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
+//        [[NSNotificationCenter defaultCenter] postNotificationName:RRNotificationSelectFriends object:self userInfo:userInfo];
+//    }
+//}
 
 #pragma mark - Contacts
 -(void) loadFacebookfriends:(RRCallback) callback {
@@ -320,35 +417,38 @@ static CGSize keyboardRect;
 }
 
 #pragma mark - Table data source
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 1;
-}
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return [self.friends count];
-}
--(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
-    return 0.0f;
-}
--(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
-    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 0.0f)];
-    [view setBackgroundColor:[UIColor blackColor]];
-    return view;
-}
+//-(CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+//    return 0.0f;
+//}
+//-(UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+//    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 0.0f)];
+//    [view setBackgroundColor:[UIColor blackColor]];
+//    return view;
+//}
 -(CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     return kRowHeight;
 }
 
 #pragma mark - Table view cells
+
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    RRContact *contact = [self.friends objectAtIndex:[indexPath row]];
+    RRContact *contact = [[tableData objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
     if ([contact selected] == YES) {
         [contact setSelected:NO];
     } else {
         [contact setSelected:YES];
     }
+    
+    NSMutableArray *temporaryArray = [tableData objectAtIndex:indexPath.section];
+    [temporaryArray replaceObjectAtIndex:indexPath.row withObject:contact];
+    [tableData replaceObjectAtIndex:indexPath.section withObject:temporaryArray];
+    
     [self.friends removeObjectAtIndex:[indexPath row]];
     [self.friends insertObject:contact atIndex:[indexPath row]];
-    [friendsTableview reloadRowsAtIndexPaths:[NSArray arrayWithObjects:[NSIndexPath indexPathForItem:[indexPath row] inSection:0], nil] withRowAnimation:UITableViewRowAnimationAutomatic];
+    
+    [friendsTableview beginUpdates];
+    [friendsTableview reloadRowsAtIndexPaths:[NSArray arrayWithObjects:indexPath, nil] withRowAnimation:UITableViewRowAnimationAutomatic];
+    [friendsTableview endUpdates];
     NSMutableArray *friendsArray = [self.friends mutableCopy];
     NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
     [[NSNotificationCenter defaultCenter] postNotificationName:RRNotificationSelectFriends object:self userInfo:userInfo];
@@ -377,10 +477,12 @@ static CGSize keyboardRect;
     
     if ([[addEmailTextfield text] length] > 0) {
         RRContact *contact = [RRContact new];
+        [contact setName:@""];
         [contact setEmail:[addEmailTextfield text]];
         [contact setSelected:YES];
         [contact setType:kRRContactTypeEmail];
         [self.friends insertObject:contact atIndex:1];
+        tableData = [self partitionObjects:self.friends collationStringSelector:@selector(name)];
         [friendsTableview reloadData];
         NSMutableArray *friendsArray = [self.friends mutableCopy];
         NSDictionary *userInfo = [NSDictionary dictionaryWithObject:friendsArray forKey:@"friends"];
@@ -444,6 +546,39 @@ static CGSize keyboardRect;
 }
 
 #pragma mark - Helpers
+//-(void) formatFriendsListBasedOnAlphabets {
+//    alphaDictionary = [NSMutableDictionary new];
+//    for (RRContact *contact in self.friends) {
+//        if ([contact name] != nil && [[contact name] length] > 1) {
+//            NSString *firstLetter = [[[[contact name] stringByTrimmingCharactersInSet:
+//                                      [NSCharacterSet whitespaceCharacterSet]] substringToIndex:1] lowercaseString];
+//            if([alphaDictionary objectForKey:firstLetter] != nil ) {
+//                NSMutableArray *array = [alphaDictionary objectForKey:firstLetter];
+//                [array addObject:contact];
+//                [alphaDictionary setObject:array forKey:firstLetter];
+//            } else {
+//                NSMutableArray *array = [NSMutableArray new];
+//                [array addObject:contact];
+//                [alphaDictionary setObject:array forKey:firstLetter];
+//            }
+//        } else if ([contact email] != nil && [[contact email] length] > 1) {
+//            NSString *firstLetter = [[[[contact email] stringByTrimmingCharactersInSet:
+//                                       [NSCharacterSet whitespaceCharacterSet]] substringToIndex:1] lowercaseString];
+//            if([alphaDictionary objectForKey:firstLetter] != nil ) {
+//                NSMutableArray *array = [alphaDictionary objectForKey:firstLetter];
+//                [array addObject:contact];
+//                [alphaDictionary setObject:array forKey:firstLetter];
+//            } else {
+//                NSMutableArray *array = [NSMutableArray new];
+//                [array addObject:contact];
+//                [alphaDictionary setObject:array forKey:firstLetter];
+//            }
+//        }
+//    }
+//    NSArray * sortedKeys = [[alphaDictionary allKeys] sortedArrayUsingSelector: @selector(caseInsensitiveCompare:)];
+//    NSArray * objects = [alphaDictionary objectsForKeys: sortedKeys notFoundMarker: [NSNull null]];
+//    NSLog(@"keys %d ", [[alphaDictionary allKeys] count]);
+//}
 -(void) callFacebook {
     if([RRHelper isKeyValidInPlist:kFacebookID]) {
         // facebookID present, load friends from facebook
@@ -474,6 +609,7 @@ static CGSize keyboardRect;
             weakSelf.friends = [[RRHelper contactsFromAddressBook] mutableCopy];
             originalFriendsArray = [weakSelf.friends mutableCopy];
             [weakSelf sortFriends];
+            tableData = [weakSelf partitionObjects:weakSelf.friends collationStringSelector:@selector(name)];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [blockFriendsTableView reloadData];
             });
@@ -484,8 +620,10 @@ static CGSize keyboardRect;
     }];
 }
 -(void) setupCell:(RRContactTableViewCell*) cell forIndexPath:(NSIndexPath*) indexPath {
-    
-    RRContact *contact = [self.friends objectAtIndex:[indexPath row]];
+//    NSArray * sortedKeys = [[alphaDictionary allKeys] sortedArrayUsingSelector: @selector(caseInsensitiveCompare:)];
+//    NSString *alphaSection = [sortedKeys objectAtIndex:indexPath.section];
+//    NSMutableArray *contactsInThisSection = [alphaDictionary objectForKey:alphaSection];
+    RRContact *contact = [[tableData objectAtIndex:indexPath.section] objectAtIndex:indexPath.row];
     if ([contact selected] == YES) {
         UIImageView *selectedImageview = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"selected"]];
         [selectedImageview setFrame:CGRectMake(0, 0, 24, 19)];
